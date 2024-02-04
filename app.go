@@ -215,18 +215,20 @@ func main() {
 		return c.SendString(message)
 	})
 
-	app.Post("/UserAccounts/Delete/:id", func(c *fiber.Ctx) error {
-		id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-		if err != nil {
+	app.Post("/UserAccounts/Delete", func(c *fiber.Ctx) error {
+		user_account := new(UserAccounts)
+
+		if err := c.BodyParser(user_account); err != nil {
 			log.Print(err)
-			c.Status(400).SendString("Incorrect ID")
+			c.Status(400).SendString("Incorrect UserAccounts")
+			return err
 		}
 
 		message := ""
 
 		db := c.Locals("db").(*sql.DB)
 
-		deleted, err := deleteUserAccount(id, db)
+		deleted, err := deleteUserAccount(user_account.Id, db)
 		if err != nil {
 			log.Print(err)
 		}
@@ -459,8 +461,8 @@ func updateUserAccount(ua UserAccounts, db *sql.DB) (int64, error) {
 	return updated, nil
 }
 
-func deleteUserAccount(id int64, db *sql.DB) (int64, error) {
-	result, err := db.Exec("DELETE user_accounts WHERE id = ?", id)
+func deleteUserAccount(id int, db *sql.DB) (int64, error) {
+	result, err := db.Exec("DELETE FROM user_accounts WHERE id = ?", id)
 	if err != nil {
 		return 0, fmt.Errorf("deleteUserAccount: %v", err)
 	}
